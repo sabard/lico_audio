@@ -12,6 +12,7 @@ signals:
   midi_out:
     shape: 4
     dtype: int32
+    max_packets_per_tick: 100
 
   sine_wave:
     shape: (960, )
@@ -23,7 +24,7 @@ signals:
 
 
 modules:
-  midi_cap:
+  midi_cap:  # TODO increase max_packets_per_tick and make this async
     language: python
     in:
       name: midi_in
@@ -31,6 +32,7 @@ modules:
         type: midi
         midi_device: 5
       schema:
+        max_packets_per_tick: 100
         data:
           dtype: int32
           size: 4
