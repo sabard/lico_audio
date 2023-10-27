@@ -1,0 +1,75 @@
+# Output a sine wave over line out
+
+config:
+  tick_len: 10000
+  source_init_ticks: 2
+
+  # user-defined config
+  # TODO merge with sink args
+  sampling_rate: 48000
+
+signals:
+  midi_out:
+    shape: 4
+    dtype: int32
+
+  sine_wave:
+    shape: (960, )
+    dtype: int16
+    history: 100
+    # shape: (8820, )
+    # dtype: int16
+    # history: 1000
+
+
+modules:
+  midi_cap:
+    language: python
+    in:
+      name: midi_in
+      args:
+        type: midi
+        midi_device: 5
+      schema:
+        data:
+          dtype: int32
+          size: 4
+    out:
+      - midi_out
+
+  sine_gen:
+    language: python
+    constructor: true
+    numba: false
+    in:
+      - midi_out
+    out:
+      - sine_wave
+
+  sine_audio_out:
+    language: python
+    in:
+      - sine_wave
+    out:
+      name: sine_out
+      args:
+        type: line
+        pcm:
+          device: "default"
+          mode: 0  # SND_PCM_NONBLOCK # SND_PCM_ASYNC
+          access: SND_PCM_ACCESS_RW_INTERLEAVED
+          format: SND_PCM_FORMAT_S16
+          channels: 2
+          rate: 48000
+          buffer_time: 0  # ring buffer length in us
+          period_time: 10000  # period time in us
+          periods: 2
+      schema:
+        data:
+          dtype: int16
+          size: 960
+          # dtype: int16
+          # size: 8820
+      async: True
+      buffered: True # TODO, setting False should allow copying directly from signal history. maybe this is the same as having an "empty" parser
+
